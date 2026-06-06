@@ -320,6 +320,5 @@ wszystko musi byc realizowane w github
 print screens z github
 
 
-**Jak działa aplikacja
-**
+**Jak działa aplikacja**
 Użytkownik widzi interfejs czatu, w którym może wpisać opis pogody, na przykład że jest zimno i pada deszcz albo że jest bardzo gorąco i słonecznie. System analizuje wpisany tekst i próbuje wyciągnąć z niego kluczowe informacje, takie jak temperatura oraz warunki pogodowe. Następnie na tej podstawie generowana jest odpowiedź, która zawiera propozycję ubioru, dodatków, a także wskazówki dotyczące ochrony przed warunkami atmosferycznymi.
