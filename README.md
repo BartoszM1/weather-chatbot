@@ -324,3 +324,12 @@ print screens z github
 **Jak działa aplikacja**
 
 Użytkownik widzi interfejs czatu, w którym może wpisać opis pogody, na przykład że jest zimno i pada deszcz albo że jest bardzo gorąco i słonecznie. System analizuje wpisany tekst i próbuje wyciągnąć z niego kluczowe informacje, takie jak temperatura oraz warunki pogodowe. Następnie na tej podstawie generowana jest odpowiedź, która zawiera propozycję ubioru, dodatków, a także wskazówki dotyczące ochrony przed warunkami atmosferycznymi.
+
+
+**Architektura projektu**
+
+Projekt składa się z trzech warstw: struktury HTML odpowiedzialnej za interfejs, CSS odpowiadający za wygląd oraz JavaScript, który stanowi rdzeń logiki całej aplikacji.
+
+Warstwa JavaScript została dodatkowo podzielona logicznie na moduły w jednym pliku, obejmujące między innymi konfigurację, analizę tekstu użytkownika, generowanie rekomendacji ubioru, a także funkcje odpowiedzialne za przechowywanie historii rozmowy w LocalStorage oraz tryb ciemny.
+
+Najważniejszą częścią systemu jest silnik rekomendacji ubioru, który na podstawie określonych warunków pogodowych buduje dynamiczną odpowiedź, uwzględniającą różne scenariusze, od mrozu po upały, a także dodatkowe czynniki takie jak deszcz, wiatr czy burze.
