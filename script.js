@@ -433,4 +433,3 @@ function exportChatHistory() {
 window.addEventListener('load', () => {
     userInput.focus();
 });
- 
