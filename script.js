@@ -1,5 +1,6 @@
 // ========================================
 // WEATHER FASHION CHATBOT - JavaScript
+// ETAP 5: Dynamiczny chatbot
 // ========================================
 
 // Pobranie elementów DOM
@@ -7,42 +8,75 @@ const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const chatBox = document.getElementById('chat-box');
 
+// Flaga do kontroli wysyłania wiadomości
+let isWaitingForResponse = false;
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     sendBtn.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !isWaitingForResponse) {
             sendMessage();
         }
     });
+    
+    // Auto-fokus na input
+    userInput.focus();
 });
 
 // ========================================
-// KROK 1: POBRANIE DANYCH Z INPUTU
+// DYNAMICZNA FUNKCJA WYSYŁANIA WIADOMOŚCI
 // ========================================
 
 function sendMessage() {
-    const input = document.getElementById('user-input').value.trim();
+    // Pobranie inputu
+    const input = document.getElementById('user-input');
+    const userText = input.value.trim();
     
-    // Sprawdzenie czy input nie jest pusty
-    if (input === '') {
+    // Walidacja - sprawdzenie czy input nie jest pusty
+    if (userText === '') {
         return;
     }
     
+    // Zabezpieczenie przed wielokrotnym wysyłaniem
+    if (isWaitingForResponse) {
+        return;
+    }
+    
+    // Ustawienie flagi
+    isWaitingForResponse = true;
+    sendBtn.disabled = true;
+    
     // Dodanie wiadomości użytkownika
-    addMessage(input, 'user-message');
+    addMessage(userText, 'user-message');
     
-    // Czyszczenie inputu
-    userInput.value = '';
+    // Czyszczenie inputu natychmiast
+    input.value = '';
     
-    // Generowanie odpowiedzi bota
+    // Pokazanie wskaźnika pisania
+    showTypingIndicator();
+    
+    // Generowanie odpowiedzi bota z opóźnieniem
     setTimeout(() => {
-        const botResponseText = botResponse(input);
-        addMessage(botResponseText, 'bot-message');
+        // Usunięcie wskaźnika pisania
+        removeTypingIndicator();
         
-        // Automatyczne przewinięcie do ostatniej wiadomości
+        // Generowanie odpowiedzi
+        const response = botResponse(userText);
+        
+        // Dodanie odpowiedzi bota
+        addMessage(response, 'bot-message');
+        
+        // Zresetowanie flagi i przycisku
+        isWaitingForResponse = false;
+        sendBtn.disabled = false;
+        
+        // Automatyczne przewinięcie do dołu
         scrollToBottom();
-    }, 500);
+        
+        // Auto-fokus na input
+        input.focus();
+    }, 800); // Opóźnienie 800ms
 }
 
 // ========================================
@@ -60,12 +94,46 @@ function addMessage(message, sender) {
     div.appendChild(messageContent);
     chatBox.appendChild(div);
     
-    // Przewinięcie do ostatniej wiadomości
+    // Automatyczne przewinięcie do ostatniej wiadomości
     scrollToBottom();
 }
 
 function scrollToBottom() {
-    chatBox.scrollTop = chatBox.scrollHeight;
+    setTimeout(() => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }, 100);
+}
+
+// ========================================
+// WSKAŹNIK PISANIA
+// ========================================
+
+function showTypingIndicator() {
+    const div = document.createElement('div');
+    div.classList.add('message', 'bot-message');
+    div.id = 'typing-indicator';
+    
+    const typingContent = document.createElement('div');
+    typingContent.classList.add('message-content', 'typing-indicator');
+    
+    // Utworzenie trzech kropek
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('span');
+        dot.textContent = '●';
+        typingContent.appendChild(dot);
+    }
+    
+    div.appendChild(typingContent);
+    chatBox.appendChild(div);
+    
+    scrollToBottom();
+}
+
+function removeTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
 }
 
 // ========================================
@@ -93,24 +161,31 @@ function botResponse(userInput) {
 // ========================================
 
 function analyzeTemperature(input) {
-    // Sprawdzenie różnych wariantów temperatury
-    if (input.includes('zimno') || input.includes('mróz') || input.includes('-') || input.includes('0') || input.includes('5') || input.includes('10')) {
+    // Sprawdzenie bardzo zimno
+    if (input.includes('zimno') || input.includes('mróz') || input.includes('-') || 
+        input.includes('0°') || input.includes('5°') || input.includes('10°')) {
         return 'zimno';
     }
     
+    // Sprawdzenie chłodno
     if (input.includes('chłodno') || input.includes('chłod')) {
         return 'chłodno';
     }
     
-    if (input.includes('neutralnie') || input.includes('normalne') || input.includes('15') || input.includes('20')) {
+    // Sprawdzenie neutralnie
+    if (input.includes('neutralnie') || input.includes('normalne') || 
+        input.includes('15°') || input.includes('20°')) {
         return 'neutralnie';
     }
     
-    if (input.includes('ciepło') || input.includes('ciepłe')) {
+    // Sprawdzenie ciepło
+    if (input.includes('ciepło') || input.includes('ciepłe') || input.includes('przyjemnie')) {
         return 'ciepło';
     }
     
-    if (input.includes('gorąco') || input.includes('gorące') || input.includes('25') || input.includes('30') || input.includes('35')) {
+    // Sprawdzenie gorąco
+    if (input.includes('gorąco') || input.includes('gorące') || input.includes('upalnie') ||
+        input.includes('25°') || input.includes('30°') || input.includes('35°')) {
         return 'gorąco';
     }
     
@@ -122,7 +197,7 @@ function analyzeTemperature(input) {
 // ========================================
 
 function analyzeWeather(input) {
-    // Sprawdzenie warunków pogodowych za pomocą switch
+    // Sprawdzenie warunków pogodowych
     const weatherKeywords = extractWeatherKeywords(input);
     
     if (weatherKeywords.length === 0) {
@@ -137,32 +212,37 @@ function extractWeatherKeywords(input) {
     const keywords = [];
     
     // Deszcz
-    if (input.includes('deszcz') || input.includes('pada') || input.includes('mokro') || input.includes('wilgot')) {
+    if (input.includes('deszcz') || input.includes('pada') || input.includes('mokro') || 
+        input.includes('wilgot') || input.includes('deszczowy')) {
         keywords.push('deszcz');
     }
     
     // Śnieg
-    if (input.includes('śnieg') || input.includes('śniegu') || input.includes('zaspy')) {
+    if (input.includes('śnieg') || input.includes('śniegu') || input.includes('zaspy') ||
+        input.includes('śnieżny')) {
         keywords.push('śnieg');
     }
     
     // Słońce
-    if (input.includes('słonce') || input.includes('słoneczn') || input.includes('słonecz')) {
+    if (input.includes('słonce') || input.includes('słoneczn') || input.includes('słonecz') ||
+        input.includes('słoneczny')) {
         keywords.push('słońce');
     }
     
     // Wiatr
-    if (input.includes('wiatr') || input.includes('wietrzn') || input.includes('wieje')) {
+    if (input.includes('wiatr') || input.includes('wietrzn') || input.includes('wieje') ||
+        input.includes('wietrzny')) {
         keywords.push('wiatr');
     }
     
     // Burza
-    if (input.includes('burz') || input.includes('piorun') || input.includes('grzmot')) {
+    if (input.includes('burz') || input.includes('piorun') || input.includes('grzmot') ||
+        input.includes('burza')) {
         keywords.push('burza');
     }
     
     // Mgła
-    if (input.includes('mgł') || input.includes('mgła')) {
+    if (input.includes('mgł') || input.includes('mgła') || input.includes('mglisty')) {
         keywords.push('mgła');
     }
     
@@ -283,28 +363,38 @@ function generateClothingRecommendation(temperature, weather, originalInput) {
 
 function handleDefaultResponse(input) {
     // Powitanie
-    if (input.includes('cześć') || input.includes('hi') || input.includes('hello') || input.includes('hej')) {
+    if (input.includes('cześć') || input.includes('hi') || input.includes('hello') || 
+        input.includes('hej') || input.includes('witaj')) {
         return '👋 Cześć! Jestem Twoim asystentem mody. Powiedz mi o dzisiejszej pogodzie, a ja zasugeruję Ci idealny strój!';
     }
     
     // Dziękowanie
-    if (input.includes('dzięki') || input.includes('dziękuję') || input.includes('thank')) {
+    if (input.includes('dzięki') || input.includes('dziękuję') || input.includes('thank') ||
+        input.includes('dzięn') || input.includes('spasibo')) {
         return '😊 Chętnie! Jakby potrzebowała Ci jeszcze jakieś porady dotyczącej odzieży, daj mi znać!';
     }
     
     // Pożegnanie
-    if (input.includes('do widzenia') || input.includes('bye') || input.includes('do zobaczenia') || input.includes('pa')) {
+    if (input.includes('do widzenia') || input.includes('bye') || input.includes('do zobaczenia') || 
+        input.includes('pa') || input.includes('żegnaj')) {
         return '👋 Do widzenia! Mam nadzieję, że dobrze się ubierzesz. Powodzenia! 🎉';
     }
     
     // Pytania o funkcje
-    if (input.includes('co możesz') || input.includes('co potrafisz') || input.includes('pomoc') || input.includes('help')) {
+    if (input.includes('co możesz') || input.includes('co potrafisz') || input.includes('pomoc') || 
+        input.includes('help') || input.includes('co robisz')) {
         return '🤖 Mogę Ci pomóc w wyborze odzieży! Opisz mi:\n• Temperaturę powietrza\n• Warunki pogodowe (deszcz, śnieg, słońce)\n• Ewentualnie: wilgotność, wiatr\n\nZasugeruję Ci idealne ubrania! 👕';
     }
     
     // Pytanie o pogodę bez informacji
-    if (input.includes('jaka pogoda') || input.includes('jak się ubrać') || input.includes('co włożyć')) {
+    if (input.includes('jaka pogoda') || input.includes('jak się ubrać') || input.includes('co włożyć') ||
+        input.includes('co ubrac')) {
         return '😊 Aby Ci pomóc, potrzebuję więcej informacji! Powiedz mi:\n• Jaka jest temperatura?\n• Czy pada deszcz/śnieg?\n• Czy jest wietrznie?\n\nDaj mi szczegóły, a będę wiedzieć, co zasugerować! 👕';
+    }
+    
+    // Pytania o pogodę
+    if (input.includes('pogoda') || input.includes('weather')) {
+        return '🌦️ Aby podać Ci rekomendacje, powiedz mi więcej o warunkach:\n• Temperatura w stopniach\n• Czy pada deszcz lub śnieg?\n• Czy jest słonecznie?\n• Czy wieje wiatr?\n\nWaż się swoim opisem! 😊';
     }
     
     // Ogólna odpowiedź
@@ -326,7 +416,7 @@ function clearChat() {
     chatBox.appendChild(welcomeMessage);
 }
 
-// Usunięcie wiadomości powitalnej przy pierwszej wiadomości
-document.addEventListener('DOMContentLoaded', () => {
+// Auto-fokus przy ładowaniu strony
+window.addEventListener('load', () => {
     userInput.focus();
 });
