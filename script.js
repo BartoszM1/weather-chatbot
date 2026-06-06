@@ -1,18 +1,30 @@
 // ========================================
 // WEATHER FASHION CHATBOT - JavaScript
 // ETAP 5: Dynamiczny chatbot
+// ETAP 7: Ulepszenia premium (Dark Mode, LocalStorage)
 // ========================================
 
 // Pobranie elementów DOM
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const chatBox = document.getElementById('chat-box');
+const darkModeBtn = document.getElementById('dark-mode-btn');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+const exportHistoryBtn = document.getElementById('export-history-btn');
 
 // Flaga do kontroli wysyłania wiadomości
 let isWaitingForResponse = false;
 
+// Historia rozmów
+let chatHistory = [];
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicjalizacja
+    initializeDarkMode();
+    loadChatHistory();
+    
+    // Ustawienie event listenerów
     sendBtn.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !isWaitingForResponse) {
@@ -20,9 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    darkModeBtn.addEventListener('click', toggleDarkMode);
+    clearHistoryBtn.addEventListener('click', clearChatHistory);
+    exportHistoryBtn.addEventListener('click', exportChatHistory);
+    
     // Auto-fokus na input
     userInput.focus();
 });
+
+// ========================================
+// DARK MODE
+// ========================================
+
+function initializeDarkMode() {
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) {
+        document.body.classList.add('dark');
+        updateDarkModeIcon();
+    }
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+    const isDarkMode = document.body.classList.contains('dark');
+    localStorage.setItem('darkMode', isDarkMode);
+    updateDarkModeIcon();
+}
+
+function updateDarkModeIcon() {
+    const isDarkMode = document.body.classList.contains('dark');
+    darkModeBtn.innerHTML = `<span class="btn-icon">${isDarkMode ? '☀️' : '🌙'}</span>`;
+}
 
 // ========================================
 // DYNAMICZNA FUNKCJA WYSYŁANIA WIADOMOŚCI
@@ -76,6 +116,9 @@ function sendMessage() {
         
         // Auto-fokus na input
         input.focus();
+        
+        // Zapis do historii
+        saveChatHistory(userText, response);
     }, 800); // Opóźnienie 800ms
 }
 
@@ -402,21 +445,81 @@ function handleDefaultResponse(input) {
 }
 
 // ========================================
+// LOCAL STORAGE - HISTORIA ROZMÓW
+// ========================================
+
+function saveChatHistory(userMessage, botResponse) {
+    chatHistory.push({
+        user: userMessage,
+        bot: botResponse,
+        timestamp: new Date().toLocaleString('pl-PL')
+    });
+    
+    // Zapis do localStorage
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+}
+
+function loadChatHistory() {
+    const saved = localStorage.getItem('chatHistory');
+    if (saved) {
+        chatHistory = JSON.parse(saved);
+    }
+}
+
+function clearChatHistory() {
+    if (chatHistory.length === 0) {
+        alert('Historia rozmów jest pusta!');
+        return;
+    }
+    
+    if (confirm('Czy na pewno chcesz usunąć całą historię rozmów?')) {
+        chatHistory = [];
+        localStorage.removeItem('chatHistory');
+        chatBox.innerHTML = '';
+        
+        // Dodanie wiadomości powitalnej
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.classList.add('welcome-message');
+        welcomeMessage.innerHTML = `
+            <h3>Witaj ponownie! 👋</h3>
+            <p>Historia rozmów została wyczyszczona. Możemy zacząć od nowa!</p>
+            <p class="hint">💡 Napisz np: "Jest 15 stopni i pada deszcz" lub "Gorąco, 30 stopni, słoneczko"</p>
+        `;
+        chatBox.appendChild(welcomeMessage);
+    }
+}
+
+function exportChatHistory() {
+    if (chatHistory.length === 0) {
+        alert('Brak historii rozmów do eksportu!');
+        return;
+    }
+    
+    // Formatowanie danych
+    let csvContent = 'Czas,Pytanie użytkownika,Odpowiedź bota\n';
+    chatHistory.forEach(item => {
+        const timestamp = item.timestamp;
+        const userMsg = `"${item.user.replace(/"/g, '""')}"`;
+        const botMsg = `"${item.bot.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+        csvContent += `${timestamp},${userMsg},${botMsg}\n`;
+    });
+    
+    // Pobieranie pliku
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+    element.setAttribute('download', `chat-history-${new Date().getTime()}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    alert(`Historia rozmów (${ chatHistory.length} wiadomości) została wyeksportowana!`);
+}
+
+// ========================================
 // FUNKCJE POMOCNICZE
 // ========================================
 
-function clearChat() {
-    chatBox.innerHTML = '';
-    const welcomeMessage = document.createElement('div');
-    welcomeMessage.classList.add('welcome-message');
-    welcomeMessage.innerHTML = `
-        <h3>Witaj ponownie! 👋</h3>
-        <p>Czyszczenie rozmowy zakończone. Możemy zacząć od nowa!</p>
-    `;
-    chatBox.appendChild(welcomeMessage);
-}
-
-// Auto-fokus przy ładowaniu strony
 window.addEventListener('load', () => {
     userInput.focus();
 });
