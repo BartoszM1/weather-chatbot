@@ -5,8 +5,12 @@ const darkModeBtn = document.getElementById('dark-mode-btn');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const exportHistoryBtn = document.getElementById('export-history-btn');
 
+// --- KONFIGURACJA API POGODOWEGO ---
+const API_KEY = '90037b458f941500ae305607ac1a392c';
+
 let isWaitingForResponse = false;
 let chatHistory = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeDarkMode();
     loadChatHistory(); 
@@ -22,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exportHistoryBtn.addEventListener('click', exportChatHistory);  
     userInput.focus();
 });
+
 function initializeDarkMode() {
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
     if (isDarkMode) {
@@ -29,6 +34,7 @@ function initializeDarkMode() {
         updateDarkModeIcon();
     }
 }
+
 function toggleDarkMode() {
     document.body.classList.toggle('dark');
     const isDarkMode = document.body.classList.contains('dark');
@@ -40,32 +46,41 @@ function updateDarkModeIcon() {
     const isDarkMode = document.body.classList.contains('dark');
     darkModeBtn.innerHTML = `<span class="btn-icon">${isDarkMode ? '☀️' : '🌙'}</span>`;
 }
-function sendMessage() {
+
+async function sendMessage() {
     const input = document.getElementById('user-input');
     const userText = input.value.trim();
-    if (userText === '') {
+    
+    if (userText === '' || isWaitingForResponse) {
         return;
     }
-    if (isWaitingForResponse) {
-        return;
-    }
+
     isWaitingForResponse = true;
     sendBtn.disabled = true;
+    
+    // Dodaj wiadomość użytkownika do czatu
     addMessage(userText, 'user-message');
     input.value = '';
+    
+    // Pokazanie animacji pisania
     showTypingIndicator();
-    setTimeout(() => {
-        removeTypingIndicator();
-        
-        const response = botResponse(userText);
-        addMessage(response, 'bot-message');
-        isWaitingForResponse = false;
-        sendBtn.disabled = false;
-        scrollToBottom();
-        input.focus();
-        saveChatHistory(userText, response);
-    }, 800); // Opóźnienie 800ms
+
+    // Pobranie asynchronicznej odpowiedzi od bota
+    const response = await getBotResponse(userText);
+    
+    // Usunięcie animacji i dodanie odpowiedzi bota
+    removeTypingIndicator();
+    addMessage(response, 'bot-message');
+    
+    isWaitingForResponse = false;
+    sendBtn.disabled = false;
+    scrollToBottom();
+    input.focus();
+    
+    // Zapis w pamięci podręcznej
+    saveChatHistory(userText, response);
 }
+
 function addMessage(message, sender) {
     const div = document.createElement('div');
     div.classList.add('message', sender);
@@ -83,6 +98,7 @@ function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
 }
+
 function showTypingIndicator() {
     const div = document.createElement('div');
     div.classList.add('message', 'bot-message');
@@ -99,7 +115,6 @@ function showTypingIndicator() {
     
     div.appendChild(typingContent);
     chatBox.appendChild(div);
-    
     scrollToBottom();
 }
 
@@ -110,216 +125,246 @@ function removeTypingIndicator() {
     }
 }
 
-function botResponse(userInput) {
+// Główna funkcja koordynująca – decyduje czy analizować tekst lokalnie, czy użyć API
+async function getBotResponse(userInput) {
     const lowerInput = userInput.toLowerCase();
-    const temperatureData = analyzeTemperature(lowerInput);
-    const weatherCondition = analyzeWeather(lowerInput);
-    if (temperatureData || weatherCondition) {
-        return generateClothingRecommendation(temperatureData, weatherCondition, lowerInput);
+
+    // 1. Reakcja na standardowe powitania lub pożegnania
+    const defaultReply = handleDefaultResponse(lowerInput);
+    if (defaultReply) {
+        return defaultReply;
     }
-    return handleDefaultResponse(lowerInput);
+
+    // 2. SPRAWDZENIE: Czy użytkownik podał słowny opis pogody?
+    // Jeśli tekst zawiera cyfry (np. 15 stopni) lub słowa-klucze pogodowe, przetwarzamy go lokalnie
+    const hasNumbers = /\d+/.test(userInput);
+    const hasWeatherKeywords = lowerInput.includes('stopn') || lowerInput.includes('stopie') || 
+                               lowerInput.includes('ciepło') || lowerInput.includes('zimno') || 
+                               lowerInput.includes('chłodno') || lowerInput.includes('pada') || 
+                               lowerInput.includes('deszcz') || lowerInput.includes('śnieg') || 
+                               lowerInput.includes('słońce') || lowerInput.includes('wiatr');
+
+    if (hasNumbers || hasWeatherKeywords) {
+        return processLocalWeatherDescription(lowerInput);
+    }
+
+    // 3. ALTERNATYWA: Jeśli to nie był opis, traktujemy to jako nazwę miasta i odpytujemy API
+    const cityName = userInput.replace(/(pogoda w|pogoda|w|sprawdź|miasto)/gi, '').trim();
+
+    if (cityName.length < 2) {
+        return '🤖 Nie do końca zrozumiałem. Możesz opisać mi pogodę słownie (np. *"15 stopni i deszcz"*) lub podać samą nazwę miasta (np. *"Warszawa"*), żebym sprawdził ją w API!';
+    }
+
+    try {
+        // Fetch do OpenWeatherMap API
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=pl`);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                return '🔑 Twój klucz API jest jeszcze nieaktywny w chmurze OpenWeather. Aktywacja nowego konta trwa zwykle do godziny. W międzyczasie możesz opisywać mi pogodę słownie, np. *"chłodno, 10 stopni i wiatr"*!';
+            }
+            if (response.status === 404) {
+                return `😔 Przykro mi, ale nie znalazłem miasta lub opisu dla "${cityName}". Jeśli to nazwa miasta, upewnij się, że nie ma literówki. Jeśli to opis pogody, dodaj informację o temperaturze (np. "15 stopni").`;
+            }
+            throw new Error('Problem z API');
+        }
+
+        const data = await response.json();
+        
+        // Odczyt parametrów z API
+        const temp = data.main.temp;
+        const weatherDescription = data.weather[0].description;
+        const weatherMain = data.weather[0].main.toLowerCase();
+        const windSpeed = data.wind.speed * 3.6; // m/s na km/h
+
+        // Mapowanie na kategorie
+        const mappedTemp = mapTemperature(temp);
+        const mappedWeather = mapWeatherCondition(weatherMain);
+
+        // Generowanie odpowiedzi
+        let finalResponse = `🌍 **Pogoda z API dla miasta: ${data.name}**\n`;
+        finalResponse += `🌡️ Temperatura: ${temp.toFixed(1)}°C | ☁️ Stan: ${weatherDescription}\n`;
+        finalResponse += `💨 Wiatr: ${windSpeed.toFixed(1)} km/h\n\n`;
+        finalResponse += generateClothingRecommendation(mappedTemp, mappedWeather, windSpeed > 22);
+
+        return finalResponse;
+
+    } catch (error) {
+        console.error(error);
+        return '⚠️ Wystąpił błąd podczas próby pobrania pogody z API. Możesz w tej chwili wpisać opis ręcznie, np.: *"12 stopni, wieje wiatr i pada deszcz"*.';
+    }
 }
 
-function analyzeTemperature(input) {
-    if (input.includes('zimno') || input.includes('mróz') || input.includes('-') || 
-        input.includes('0°') || input.includes('5°') || input.includes('10°')) {
-        return 'zimno';
+// NOWA FUNKCJA: Przetwarzanie ręcznego opisu użytkownika (odtworzenie Twoich pierwotnych założeń)
+function processLocalWeatherDescription(lowerInput) {
+    let detectedTempCategory = 'neutralnie'; // domyślna
+    let detectedWeatherCategory = null;
+    let isWindy = lowerInput.includes('wiatr') || lowerInput.includes('wieje') || lowerInput.includes('mocno');
+
+    // 1. Wyciąganie temperatury z tekstu za pomocą wyrażenia regularnego
+    const tempMatch = lowerInput.match(/(-?\d+)\s*(deg|stop|°)/);
+    if (tempMatch) {
+        const tempValue = parseInt(tempMatch[1]);
+        detectedTempCategory = mapTemperature(tempValue);
+    } else {
+        // Próba wykrycia po słowach kluczowych, jeśli nie podano konkretnej cyfry
+        if (lowerInput.includes('zimno') || lowerInput.includes('mróz') || lowerInput.includes('śnieg')) detectedTempCategory = 'zimno';
+        else if (lowerInput.includes('chłodno') || lowerInput.includes('rześko')) detectedTempCategory = 'chłodno';
+        else if (lowerInput.includes('ciepło') || lowerInput.includes('ładnie')) detectedTempCategory = 'ciepło';
+        else if (lowerInput.includes('gorąco') || lowerInput.includes('upał') || lowerInput.includes('skwar')) detectedTempCategory = 'gorąco';
     }
-    if (input.includes('chłodno') || input.includes('chłod')) {
-        return 'chłodno';
+
+    // 2. Wykrywanie warunków atmosferycznych z tekstu
+    if (lowerInput.includes('deszcz') || lowerInput.includes('pada') || lowerInput.includes('ulewa') || lowerInput.includes('mży')) {
+        detectedWeatherCategory = 'deszcz';
+    } else if (lowerInput.includes('śnieg') || lowerInput.includes('sypie') || lowerInput.includes('zamieć')) {
+        detectedWeatherCategory = 'śnieg';
+    } else if (lowerInput.includes('słońce') || lowerInput.includes('słonecz') || lowerInput.includes('czyste niebo')) {
+        detectedWeatherCategory = 'słońce';
+    } else if (lowerInput.includes('burza') || lowerInput.includes('piorun')) {
+        detectedWeatherCategory = 'burza';
+    } else if (lowerInput.includes('mgła') || lowerInput.includes('pochmurno') || lowerInput.includes('chmury')) {
+        detectedWeatherCategory = 'mgła';
     }
-    if (input.includes('neutralnie') || input.includes('normalne') || 
-        input.includes('15°') || input.includes('20°')) {
-        return 'neutralnie';
+
+    // 3. Budowanie nagłówka podsumowującego rozpoznanie
+    let localHeader = `🤖 **Rozpoznałem Twój opis słowny:**\n`;
+    if (tempMatch) {
+        localHeader += `🌡️ Temperatura z opisu: ${tempMatch[1]}°C\n\n`;
+    } else {
+        localHeader += `📊 Dobieram ubiór na podstawie słów kluczowych...\n\n`;
     }
-    if (input.includes('ciepło') || input.includes('ciepłe') || input.includes('przyjemnie')) {
-        return 'ciepło';
-    }
-    if (input.includes('gorąco') || input.includes('gorące') || input.includes('upalnie') ||
-        input.includes('25°') || input.includes('30°') || input.includes('35°')) {
-        return 'gorąco';
-    }
-    
+
+    return localHeader + generateClothingRecommendation(detectedTempCategory, detectedWeatherCategory, isWindy);
+}
+
+// Funkcja pomocnicza do mapowania temperatur na kategorie
+function mapTemperature(temp) {
+    if (temp <= 5) return 'zimno';
+    if (temp > 5 && temp <= 12) return 'chłodno';
+    if (temp > 12 && temp <= 19) return 'neutralnie';
+    if (temp > 19 && temp <= 25) return 'ciepło';
+    return 'gorąco';
+}
+
+// Funkcja pomocnicza do mapowania stanów pogodowych z API na warunki dodatków
+function mapWeatherCondition(mainCondition) {
+    if (mainCondition.includes('rain') || mainCondition.includes('drizzle')) return 'deszcz';
+    if (mainCondition.includes('snow')) return 'śnieg';
+    if (mainCondition.includes('clear')) return 'słońce';
+    if (mainCondition.includes('thunderstorm')) return 'burza';
+    if (mainCondition.includes('mist') || mainCondition.includes('fog') || mainCondition.includes('clouds')) return 'mgła';
     return null;
 }
 
-function analyzeWeather(input) {
-    const weatherKeywords = extractWeatherKeywords(input);
-    
-    if (weatherKeywords.length === 0) {
-        return null;
-    }
-    return weatherKeywords[0];
-}
-
-function extractWeatherKeywords(input) {
-    const keywords = [];
-    
-    if (input.includes('deszcz') || input.includes('pada') || input.includes('mokro') || 
-        input.includes('wilgot') || input.includes('deszczowy')) {
-        keywords.push('deszcz');
-    }
-    
-    if (input.includes('śnieg') || input.includes('śniegu') || input.includes('zaspy') ||
-        input.includes('śnieżny')) {
-        keywords.push('śnieg');
-    }
-    
-    if (input.includes('słonce') || input.includes('słoneczn') || input.includes('słonecz') ||
-        input.includes('słoneczny')) {
-        keywords.push('słońce');
-    }
-    
-    if (input.includes('wiatr') || input.includes('wietrzn') || input.includes('wieje') ||
-        input.includes('wietrzny')) {
-        keywords.push('wiatr');
-    }
-    
-    if (input.includes('burz') || input.includes('piorun') || input.includes('grzmot') ||
-        input.includes('burza')) {
-        keywords.push('burza');
-    }
-    
-    if (input.includes('mgł') || input.includes('mgła') || input.includes('mglisty')) {
-        keywords.push('mgła');
-    }
-    
-    return keywords;
-}
-
-function generateClothingRecommendation(temperature, weather, originalInput) {
-    let recommendation = '👕 Oto moja rekomendacja odzieży:\n\n';
+// Funkcja generująca tekst rekomendacji modowych
+function generateClothingRecommendation(temperature, weather, isWindy) {
+    let recommendation = '👕 **Oto moja rekomendacja odzieży:**\n\n';
     
     switch (temperature) {
         case 'zimno':
-            recommendation += '❄️ TEMPERATURA: Bardzo zimno\n';
-            recommendation += '• Kurtka zimowa lub parka\n';
-            recommendation += '• Ciepłe spodnie (jeansy, legginsy)\n';
-            recommendation += '• Sweter lub bluza\n';
-            recommendation += '• Czapka, szalik, rękawiczki\n';
-            recommendation += '• Ciepłe skarpety i buty zimowe\n\n';
+            recommendation += '❄️ **WARUNKI: Bardzo zimno**\n';
+            recommendation += '• Kurtka zimowa lub puchowa parka\n';
+            recommendation += '• Ciepłe spodnie (np. jeansy, grube legginsy)\n';
+            recommendation += '• Gruby sweter, golf lub polar\n';
+            recommendation += '• Czapka, szalik i rękawiczki\n';
+            recommendation += '• Zimowe buty z grubą, izolującą podeszwą\n\n';
             break;
             
         case 'chłodno':
-            recommendation += '🧥 TEMPERATURA: Chłodno\n';
-            recommendation += '• Kurtka przejściowa (bomber, windbreaker)\n';
-            recommendation += '• Długie spodnie\n';
-            recommendation += '• Lekki sweter lub bluza\n';
-            recommendation += '• Opcjonalnie: czapka i szalik\n';
-            recommendation += '• Buty zamknięte\n\n';
+            recommendation += '🧥 **WARUNKI: Chłodno**\n';
+            recommendation += '• Kurtka przejściowa (bomberka, softshell, katana)\n';
+            recommendation += '• Długie spodnie / klasyczne jeansy\n';
+            recommendation += '• Lekki sweter, bluza z kapturem lub longsleeve\n';
+            recommendation += '• Zamknięte buty (np. adidasy, sneakersy, botki)\n\n';
             break;
             
         case 'neutralnie':
-            recommendation += '😊 TEMPERATURA: Miła pogoda\n';
-            recommendation += '• Zwykłe spodnie lub jeansy\n';
-            recommendation += '• Koszulka lub lekka bluza\n';
-            recommendation += '• Lekka kurtka na wypadek\n';
-            recommendation += '• Buty sportowe lub casualowe\n\n';
+            recommendation += '😊 **WARUNKI: Miła, umiarkowana pogoda**\n';
+            recommendation += '• Klasyczne spodnie, chinosy lub jeansy\n';
+            recommendation += '• T-shirt i rozpinana bluza lub lekka katana na wierzch\n';
+            recommendation += '• Wygodne buty sportowe lub casualowe\n\n';
             break;
             
         case 'ciepło':
-            recommendation += '☀️ TEMPERATURA: Ciepło\n';
-            recommendation += '• Krótkie spodnie lub szorty\n';
-            recommendation += '• Koszulka lub top\n';
-            recommendation += '• Lekki kardigan na wypadek\n';
+            recommendation += '☀️ **WARUNKI: Ciepło**\n';
+            recommendation += '• Krótkie spodenki, szorty, spódnica lub luźne spodnie\n';
+            recommendation += '• Koszulka z krótkim rękawem lub top\n';
             recommendation += '• Okulary przeciwsłoneczne\n';
-            recommendation += '• Lekkie buty (trampki, sandały)\n\n';
+            recommendation += '• Lekkie obuwie (trampki, sandały)\n\n';
             break;
             
         case 'gorąco':
-            recommendation += '🌡️ TEMPERATURA: Bardzo gorąco\n';
-            recommendation += '• Krótkie spodenki\n';
-            recommendation += '• Koszulka na ramiączkach lub bez rękawów\n';
-            recommendation += '• Materiały oddychające\n';
-            recommendation += '• Okulary i czapka z daszkiem\n';
-            recommendation += '• Sandały lub klapki\n\n';
+            recommendation += '🌡️ **WARUNKI: Bardzo gorąco (Upał)**\n';
+            recommendation += '• Cienkie szorty, przewiewne ubrania (np. len, cienka bawełna)\n';
+            recommendation += '• Koszulka bez rękawów / na ramiączkach\n';
+            recommendation += '• Nakrycie głowy (czapka z daszkiem lub kapelusz słomkowy)\n';
+            recommendation += '• Sandały lub lekkie klapki\n\n';
             break;
-            
-        default:
-            recommendation += '• Normalna, wygodna odzież\n\n';
+    }
+    
+    if (isWindy && temperature !== 'gorąco') {
+        recommendation += '💨 **⚠️ UWAGA NA WIATR:** Wspominasz o wietrze / silnym podmuchu! Zastanów się nad kurtką przeciwwiatrową (windbreaker) lub dobrze dopasowaną bluzą z kapturem.\n\n';
     }
     
     if (weather) {
         switch (weather) {
             case 'deszcz':
-                recommendation += '☔ DODATKI NA DESZCZ:\n';
-                recommendation += '• Parasol lub płaszcz przeciwdeszczowy\n';
-                recommendation += '• Wodoodporne buty\n';
-                recommendation += '• Ciemne kolory (mniej widoczne plamy)\n';
+                recommendation += '☔ **DODATKI NA DESZCZ:**\n';
+                recommendation += '• Parasol lub nieprzemakalny płaszcz z kapturem\n';
+                recommendation += '• Impregnowane, wodoodporne obuwie\n';
+                recommendation += '• Unikaj długich nogawek dotykających ziemi\n';
                 break;
                 
             case 'śnieg':
-                recommendation += '❄️ DODATKI NA ŚNIEG:\n';
-                recommendation += '• Ciepłe buty z dobrą przyczepnością\n';
-                recommendation += '• Grube rękawiczki\n';
-                recommendation += '• Czapka i szalik obowiązkowe\n';
+                recommendation += '❄️ **DODATKI NA ŚNIEG:**\n';
+                recommendation += '• Buty z wyraźnym bieżnikiem (zabezpieczenie przed poślizgiem)\n';
+                recommendation += '• Nieprzemakalne, ciepłe rękawice\n';
                 break;
                 
             case 'słońce':
-                recommendation += '🌞 DODATKI NA SŁOŃCE:\n';
-                recommendation += '• Okulary przeciwsłoneczne\n';
-                recommendation += '• Czapka z daszkiem\n';
-                recommendation += '• Krem z filtrem SPF\n';
-                break;
-                
-            case 'wiatr':
-                recommendation += '💨 DODATKI NA WIATR:\n';
-                recommendation += '• Szalik lub buff\n';
-                recommendation += '• Czapka (aby jej nie uwiało)\n';
-                recommendation += '• Ubrania słabiej się poruszają\n';
+                recommendation += '🌞 **DODATKI NA SŁOŃCE:**\n';
+                recommendation += '• Okulary z filtrem UV\n';
+                recommendation += '• Krem ochronny z filtrem SPF na twarz\n';
                 break;
                 
             case 'burza':
-                recommendation += '⚡ DODATKI NA BURZĘ:\n';
-                recommendation += '• Płaszcz przeciwdeszczowy\n';
-                recommendation += '• Pozostań w domu jeśli to możliwe!\n';
-                recommendation += '• Unikaj metalowych przedmiotów\n';
+                recommendation += '⚡ **DODATKI NA BURZĘ:**\n';
+                recommendation += '• Kurtka przeciwdeszczowa\n';
+                recommendation += '• **Bezpieczeństwo:** Jeśli możesz, przeczekaj najgorsze warunki w budynku!\n';
                 break;
                 
             case 'mgła':
-                recommendation += '🌫️ DODATKI NA MGŁĘ:\n';
-                recommendation += '• Jasne ubrania - widoczność\n';
-                recommendation += '• Odblaskowe elementy\n';
+                recommendation += '🌫️ **DODATKI NA MGŁĘ/CHMURY:**\n';
+                recommendation += '• Załóż jasne elementy garderoby lub odblask, aby być dobrze widocznym\n';
                 break;
         }
     }
     
-    recommendation += '\n💡 Liczę, że się przydała moja rada! 😊';
-    
+    recommendation += '\n💡 Mam nadzieję, że moja rada ułatwi Ci dzisiejszy wybór! 😊';
     return recommendation;
 }
 
+// Obsługa domyślnych interakcji i poprawki językowe
 function handleDefaultResponse(input) {
     if (input.includes('cześć') || input.includes('hi') || input.includes('hello') || 
         input.includes('hej') || input.includes('witaj')) {
-        return '👋 Cześć! Jestem Twoim asystentem mody. Powiedz mi o dzisiejszej pogodzie, a ja zasugeruję Ci idealny strój!';
+        return '👋 Cześć! Jestem Twoim inteligentnym asystentem mody. Możesz opisać mi pogodę słownie (np. *\"15 stopni i deszcz\"*) lub podać nazwę miasta (np. *\"Gdynia\"*), a sprawdzę aktualne dane w API i dobiorę Ci outfit!';
     }
     
-    if (input.includes('dzięki') || input.includes('dziękuję') || input.includes('thank') ||
-        input.includes('dzięn') || input.includes('spasibo')) {
-        return '😊 Chętnie! Jakby potrzebowała Ci jeszcze jakieś porady dotyczącej odzieży, daj mi znać!';
+    if (input.includes('dzięki') || input.includes('dziękuję') || input.includes('thank')) {
+        return '😊 Cieszę się, że mogłem pomóc! W razie potrzeby kolejnych porad dotyczących odzieży, po prostu opisz pogodę lub wpisz miasto!';
     }
     
-    if (input.includes('do widzenia') || input.includes('bye') || input.includes('do zobaczenia') || 
-        input.includes('pa') || input.includes('żegnaj')) {
-        return '👋 Do widzenia! Mam nadzieję, że dobrze się ubierzesz. Powodzenia! 🎉';
+    if (input.includes('do widzenia') || input.includes('bye') || input.includes('pa') || input.includes('żegnaj')) {
+        return '👋 Do widzenia! Życzę świetnego stylu bez względu na warunki za oknem! 🎉';
     }
     
-    if (input.includes('co możesz') || input.includes('co potrafisz') || input.includes('pomoc') || 
-        input.includes('help') || input.includes('co robisz')) {
-        return '🤖 Mogę Ci pomóc w wyborze odzieży! Opisz mi:\n• Temperaturę powietrza\n• Warunki pogodowe (deszcz, śnieg, słońce)\n• Ewentualnie: wilgotność, wiatr\n\nZasugeruję Ci idealne ubrania! 👕';
+    if (input.includes('co możesz') || input.includes('co potrafisz') || input.includes('pomoc') || input.includes('co robisz')) {
+        return '🤖 Działam dwutorowo! Przeanalizuję Twój słowny opis pogody ALBO połączę się z API OpenWeather dla wskazanego przez Ciebie miasta, aby dobrać idealny zestaw ubrań. 👕';
     }
-    
-    if (input.includes('jaka pogoda') || input.includes('jak się ubrać') || input.includes('co włożyć') ||
-        input.includes('co ubrac')) {
-        return '😊 Aby Ci pomóc, potrzebuję więcej informacji! Powiedz mi:\n• Jaka jest temperatura?\n• Czy pada deszcz/śnieg?\n• Czy jest wietrznie?\n\nDaj mi szczegóły, a będę wiedzieć, co zasugerować! 👕';
-    }
-    
-    if (input.includes('pogoda') || input.includes('weather')) {
-        return '🌦️ Aby podać Ci rekomendacje, powiedz mi więcej o warunkach:\n• Temperatura w stopniach\n• Czy pada deszcz lub śnieg?\n• Czy jest słonecznie?\n• Czy wieje wiatr?\n\nWaż się swoim opisem! 😊';
-    }
-    
-    return '💭 Ciekawe pytanie! Aby Ci lepiej pomóc w wyborze odzieży, opisz mi warunki pogodowe na zewnątrz. Na przykład:\n"Jest 15 stopni, pada deszcz i wieje wiatr"\n\nDzięki temu będę wiedział, co Ci zasugerować! 😊';
+
+    return null;
 }
 
 function saveChatHistory(userMessage, botResponse) {
@@ -328,7 +373,6 @@ function saveChatHistory(userMessage, botResponse) {
         bot: botResponse,
         timestamp: new Date().toLocaleString('pl-PL')
     });
-    
     localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
 }
 
@@ -355,7 +399,7 @@ function clearChatHistory() {
         welcomeMessage.innerHTML = `
             <h3>Witaj ponownie! 👋</h3>
             <p>Historia rozmów została wyczyszczona. Możemy zacząć od nowa!</p>
-            <p class="hint">💡 Napisz np: "Jest 15 stopni i pada deszcz" lub "Gorąco, 30 stopni, słoneczko"</p>
+            <p class="hint">💡 Napisz np: "15 stopni i deszcz" lub podaj miasto: "Kraków"</p>
         `;
         chatBox.appendChild(welcomeMessage);
     }
@@ -383,7 +427,7 @@ function exportChatHistory() {
     element.click();
     document.body.removeChild(element);
     
-    alert(`Historia rozmów (${ chatHistory.length} wiadomości) została wyeksportowana!`);
+    alert(`Historia rozmów (${chatHistory.length} wiadomości) została wyeksportowana!`);
 }
 
 window.addEventListener('load', () => {
