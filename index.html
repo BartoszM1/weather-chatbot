@@ -32,13 +32,15 @@
                         <span class="status-icon">🟢</span>
                         <h2>Weather AI Assistant</h2>
                     </div>
-                    <p class="header-subtitle">Pomogę Ci wybrać idealny strój do dzisiejszej pogody</p>
+                    <p class="header-subtitle">Pomogę Ci wybrać idealny strój na dwa sposoby</p>
                 </div>
                 <div class="chat-box" id="chat-box">
                     <div class="welcome-message">
                         <h3>Witaj! 👋</h3>
-                        <p>Jestem Twoim asystentem mody. Opowiedz mi o dzisiejszej pogodzie, a ja zasugeruję Ci idealny strój!</p>
-                        <p class="hint">💡 Napisz np: "Jest 15 stopni i pada deszcz" lub "Gorąco, 30 stopni, słoneczko"</p>
+                        <p>Jestem Twoim asystentem mody. Dobieram kompletny ubiór na podstawie pogody na dwa wygodne sposoby:</p>
+                        <p style="margin-top: 5px;"><strong>1. Automatycznie:</strong> Wpisz nazwę miasta, a pobiorę aktualne dane meteorologiczne z API.</p>
+                        <p><strong>2. Ręcznie:</strong> Opisz warunki swoimi słowami, podając np. temperaturę, deszcz czy silny wiatr.</p>
+                        <p class="hint">💡 Napisz np: <em>"Warszawa"</em> lub <em>"15 stopni i pada deszcz"</em></p>
                     </div>
                 </div>
                 <div class="chat-input-section">
@@ -47,10 +49,10 @@
                             type="text" 
                             id="user-input" 
                             class="chat-input" 
-                            placeholder="Opisz mi pogodę... (np. 15°C, deszcz, wiatr)"
+                            placeholder="Wpisz miasto lub opisz pogodę... (np. Warszawa / 15 stopni i deszcz)"
                             autocomplete="off"
                         >
-                        <button class="send-button" onclick="sendMessage()" id="send-btn">
+                        <button class="send-button" id="send-btn">
                             <span>Wyślij</span>
                             <span class="send-icon">➤</span>
                         </button>
@@ -62,9 +64,9 @@
                 <div class="info-card">
                     <h3>💡 Porady</h3>
                     <ul>
-                        <li>Podaj temperaturę</li>
-                        <li>Opisz warunki pogodowe</li>
-                        <li>Wspomni o wietrze lub wilgotności</li>
+                        <li>Podaj nazwę miasta, by pobrać dane z API</li>
+                        <li>Lub wpisz temperaturę i stan nieba ręcznie</li>
+                        <li>Bot sam rozpozna formę i dobierze ubrania</li>
                     </ul>
                 </div>
                 <div class="info-card">
