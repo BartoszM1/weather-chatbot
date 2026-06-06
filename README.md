@@ -4,6 +4,8 @@ Dokumentacja
 Bartosz Malczewski
 Nr. albumu: 59552
 
+DEMO
+https://bartoszm1.github.io/weather-chatbot/ 
 
 OPIS ZADANIA
 
@@ -333,3 +335,10 @@ Projekt składa się z trzech warstw: struktury HTML odpowiedzialnej za interfej
 Warstwa JavaScript została dodatkowo podzielona logicznie na moduły w jednym pliku, obejmujące między innymi konfigurację, analizę tekstu użytkownika, generowanie rekomendacji ubioru, a także funkcje odpowiedzialne za przechowywanie historii rozmowy w LocalStorage oraz tryb ciemny.
 
 Najważniejszą częścią systemu jest silnik rekomendacji ubioru, który na podstawie określonych warunków pogodowych buduje dynamiczną odpowiedź, uwzględniającą różne scenariusze, od mrozu po upały, a także dodatkowe czynniki takie jak deszcz, wiatr czy burze.
+
+
+**Przechowywanie danych**
+
+Aplikacja wykorzystuje LocalStorage do zapisywania historii rozmów oraz preferencji użytkownika, takich jak tryb ciemny. Dzięki temu po odświeżeniu strony użytkownik nadal widzi poprzednią konwersację, co zwiększa płynność korzystania z aplikacji.
+
+
