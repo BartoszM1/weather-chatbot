@@ -141,7 +141,7 @@ async function getBotResponse(userInput) {
     const cityName = userInput.replace(/(pogoda w|pogoda|w|sprawdź|miasto)/gi, '').trim();
 
     if (cityName.length < 2) {
-        return '🤖 Nie do końca zrozumiałem. Możesz opisać mi pogodę słownie (np. *"15 stopni i deszcz"*) lub podać samą nazwę miasta (np. *"Warszawa"*), żebym sprawdził ją w API!';
+        return '🤖 Nie do końca zrozumiałem. Możesz opisać mi pogodę słownie (np. *"15 stopni i deszcz"*) lub podać samą nazwę miasta (np. *"Bydgoszcz"*), żebym sprawdził ją w API!';
     }
 
     try {
@@ -375,7 +375,7 @@ function clearChatHistory() {
         welcomeMessage.innerHTML = `
             <h3>Witaj ponownie! 👋</h3>
             <p>Historia rozmów została wyczyszczona. Możemy zacząć od nowa!</p>
-            <p class="hint">💡 Napisz np: "15 stopni i deszcz" lub podaj miasto: "Kraków"</p>
+            <p class="hint">💡 Napisz np: "15 stopni i deszcz" lub podaj miasto np. "Bydgoszcz"</p>
         `;
         chatBox.appendChild(welcomeMessage);
     }
