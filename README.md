@@ -7,6 +7,9 @@ Nr. albumu: 59552
 DEMO
 https://bartoszm1.github.io/weather-chatbot/ 
 
+EDIT
+Projekt został zaktualizowany o komunikację API dla pobrania aktualnej pogody.
+
 OPIS ZADANIA
 
 Zadanie projektowe — Inteligentny Agent AI na stronę WWW
