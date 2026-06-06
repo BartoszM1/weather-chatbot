@@ -1,10 +1,3 @@
-// ========================================
-// WEATHER FASHION CHATBOT - JavaScript
-// ETAP 5: Dynamiczny chatbot
-// ETAP 7: Ulepszenia premium (Dark Mode, LocalStorage)
-// ========================================
-
-// Pobranie elementów DOM
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const chatBox = document.getElementById('chat-box');
