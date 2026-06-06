@@ -66,6 +66,7 @@ Generowanie odpowiedzi
  ↓
 ( opcjonalnie )
 OpenWeather API
+
 Struktura projektu
 /project
 │
@@ -77,24 +78,31 @@ Struktura projektu
 │ ├── background.jpg
 │
 └── README.md
+
 Techniczne kroki wykonania projektu
+
 ETAP 1 — Utworzenie struktury projektu
+
 Krok 1
 Założyć folder projektu:
 weather-chatbot
+
 Krok 2
 Utworzyć pliki:
-index.html
-style.css
-script.js
+- index.html
+- style.css
+- script.js
+
 ETAP 2 — Budowa strony HTML
+
 Krok 1 — Utworzenie layoutu
 Student powinien stworzyć:
-nagłówek,
-sekcję główną,
-okno czatu,
-pole wpisywania wiadomości,
-przycisk wysyłania.
+- nagłówek,
+- sekcję główną,
+- okno czatu,
+- pole wpisywania wiadomości,
+- przycisk wysyłania.
+
 Przykładowa struktura HTML
 <div class="chat-container">
  <div class="chat-header">
@@ -106,14 +114,18 @@ Przykładowa struktura HTML
  <button onclick="sendMessage()">Send</button>
  </div>
 </div>
+
 ETAP 3 — Stylowanie CSS
+
 Wymagania UI/UX
+
 Student musi zastosować:
-nowoczesny wygląd,
-responsywność,
-animacje,
-hover effects,
-glassmorphism lub gradienty.
+- nowoczesny wygląd,
+- responsywność,
+- animacje,
+- hover effects,
+- glassmorphism lub gradienty.
+
 Elementy wymagane w CSS
 Responsywność
 @media(max-width:768px)
