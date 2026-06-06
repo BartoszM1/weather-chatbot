@@ -53,10 +53,6 @@ body {
     max-height: 90vh;
 }
 
-/* ========================================
-   HEADER
-   ======================================== */
-
 .header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -118,20 +114,12 @@ body {
     transform: translateY(0);
 }
 
-/* ========================================
-   MAIN SECTION
-   ======================================== */
-
 .main-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
-
-/* ========================================
-   CHAT CONTAINER
-   ======================================== */
 
 .chat-container {
     display: flex;
@@ -141,10 +129,6 @@ body {
     gap: 12px;
     overflow: hidden;
 }
-
-/* ========================================
-   CHAT HEADER
-   ======================================== */
 
 .chat-header {
     border-bottom: 2px solid var(--border-color);
@@ -185,10 +169,6 @@ body {
     font-size: 0.85rem;
 }
 
-/* ========================================
-   CHAT BOX (MESSAGES AREA)
-   ======================================== */
-
 .chat-box {
     flex: 1;
     overflow-y: auto;
@@ -215,7 +195,6 @@ body {
     border-radius: 3px;
 }
 
-/* Welcome Message */
 .welcome-message {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
     border-left: 4px solid var(--primary-color);
@@ -243,10 +222,6 @@ body {
     margin-top: 8px;
 }
 
-/* ========================================
-   MESSAGES (User & Bot)
-   ======================================== */
-
 .message {
     display: flex;
     margin-bottom: 6px;
@@ -264,7 +239,6 @@ body {
     }
 }
 
-/* User Message */
 .user-message {
     justify-content: flex-end;
 }
@@ -277,7 +251,6 @@ body {
     max-width: 75%;
 }
 
-/* Bot Message */
 .bot-message {
     justify-content: flex-start;
 }
@@ -301,10 +274,6 @@ body {
 body.dark .bot-message .message-content {
     color: #e0e0e0;
 }
-
-/* ========================================
-   CHAT INPUT SECTION
-   ======================================== */
 
 .chat-input-section {
     border-top: 2px solid var(--border-color);
@@ -377,10 +346,6 @@ body.dark .bot-message .message-content {
     text-align: center;
 }
 
-/* ========================================
-   TYPING INDICATOR
-   ======================================== */
-
 .typing-indicator {
     display: flex;
     gap: 4px;
@@ -424,10 +389,6 @@ body.dark .typing-indicator {
     }
 }
 
-/* ========================================
-   INFO PANEL (SIDEBAR)
-   ======================================== */
-
 .info-panel {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -463,10 +424,6 @@ body.dark .typing-indicator {
     border-bottom: none;
 }
 
-/* ========================================
-   FOOTER
-   ======================================== */
-
 .footer {
     background: var(--bg-secondary);
     color: var(--text-dark);
@@ -476,10 +433,6 @@ body.dark .typing-indicator {
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
 }
-
-/* ========================================
-   RESPONSYWNOŚĆ - TABLET (1024px)
-   ======================================== */
 
 @media (max-width: 1024px) {
     .container {
@@ -518,10 +471,6 @@ body.dark .typing-indicator {
         padding: 10px;
     }
 }
-
-/* ========================================
-   RESPONSYWNOŚĆ - TABLET VERTICAL (768px)
-   ======================================== */
 
 @media (max-width: 768px) {
     .container {
@@ -638,10 +587,6 @@ body.dark .typing-indicator {
         padding: 8px;
     }
 }
-
-/* ========================================
-   RESPONSYWNOŚĆ - MOBILE (480px)
-   ======================================== */
 
 @media (max-width: 480px) {
     body {
@@ -807,10 +752,6 @@ body.dark .typing-indicator {
     }
 }
 
-/* ========================================
-   RESPONSYWNOŚĆ - BARDZO MAŁY MOBILE (360px)
-   ======================================== */
-
 @media (max-width: 360px) {
     .header {
         padding: 12px 8px;
@@ -849,10 +790,6 @@ body.dark .typing-indicator {
         font-size: 0.65rem;
     }
 }
-
-/* ========================================
-   LANDSCAPE MODE
-   ======================================== */
 
 @media (max-height: 600px) {
     .container {
