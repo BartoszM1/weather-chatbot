@@ -132,7 +132,8 @@ function addMessage(message, sender) {
     
     const messageContent = document.createElement('div');
     messageContent.classList.add('message-content');
-    messageContent.textContent = message;
+    // Zamień \n na <br> aby prawidłowo wyświetlić tekst z formatowaniem
+    messageContent.innerHTML = message.replace(/\n/g, '<br>');
     
     div.appendChild(messageContent);
     chatBox.appendChild(div);
