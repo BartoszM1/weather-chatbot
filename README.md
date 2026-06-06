@@ -7,41 +7,52 @@ Nr. albumu: 59552
 OPIS ZADANIA
 
 Zadanie projektowe — Inteligentny Agent AI na stronę WWW
+
 Temat: Bot doradzający ubiór do pogody (HTML + CSS + JavaScript)
+
 Cel projektu
 Celem projektu jest zaprojektowanie nowoczesnego, dynamicznego chatbota webowego, który:
-działa bezpośrednio na stronie internetowej,
-komunikuje się z użytkownikiem przez interfejs czatu,
-analizuje dane wejściowe użytkownika,
-rekomenduje odpowiedni ubiór do pogody,
-posiada nowoczesny frontend z animacjami i responsywnością.
+- działa bezpośrednio na stronie internetowej,
+- komunikuje się z użytkownikiem przez interfejs czatu,
+- analizuje dane wejściowe użytkownika,
+- rekomenduje odpowiedni ubiór do pogody,
+- posiada nowoczesny frontend z animacjami i responsywnością.
+
 Technologie obowiązkowe
+
 Student musi wykorzystać:
 HTML5
 CSS3
 JavaScript (Vanilla JS)
 Responsive Web Design
+
 Dodatkowo (opcjonalnie):
 OpenWeather API
 LocalStorage
 Fetch API
 GitHub Pages / Azure Static Web Apps
+
 Funkcjonalności wymagane
+
 Bot powinien:
-przyjmować dane od użytkownika,
-analizować pogodę,
-odpowiadać dynamicznie,
-rekomendować:
-strój,
-dodatki,
-ochronę przed deszczem/zimnem,
-styl ubioru.
+- przyjmować dane od użytkownika,
+- analizować pogodę,
+- odpowiadać dynamicznie,
+- rekomendować:
+- strój,
+- dodatki,
+- ochronę przed deszczem/zimnem,
+- styl ubioru.
+
 Scenariusz działania
+
 Przykład:
 Użytkownik wpisuje:
 Jest 7 stopni i pada deszcz
+
 Bot odpowiada:
 Załóż ciepłą kurtkę przeciwdeszczową oraz wodoodporne buty. Zabierz parasol.
+
 Architektura rozwiązania
 Frontend (HTML/CSS)
  ↓
