@@ -5,7 +5,6 @@ const darkModeBtn = document.getElementById('dark-mode-btn');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const exportHistoryBtn = document.getElementById('export-history-btn');
 
-// --- KONFIGURACJA API POGODOWEGO ---
 const API_KEY = '90037b458f941500ae305607ac1a392c';
 
 let isWaitingForResponse = false;
@@ -58,17 +57,13 @@ async function sendMessage() {
     isWaitingForResponse = true;
     sendBtn.disabled = true;
     
-    // Dodaj wiadomość użytkownika do czatu
     addMessage(userText, 'user-message');
     input.value = '';
     
-    // Pokazanie animacji pisania
     showTypingIndicator();
 
-    // Pobranie asynchronicznej odpowiedzi od bota
     const response = await getBotResponse(userText);
     
-    // Usunięcie animacji i dodanie odpowiedzi bota
     removeTypingIndicator();
     addMessage(response, 'bot-message');
     
@@ -77,7 +72,6 @@ async function sendMessage() {
     scrollToBottom();
     input.focus();
     
-    // Zapis w pamięci podręcznej
     saveChatHistory(userText, response);
 }
 
@@ -125,18 +119,14 @@ function removeTypingIndicator() {
     }
 }
 
-// Główna funkcja koordynująca – decyduje czy analizować tekst lokalnie, czy użyć API
 async function getBotResponse(userInput) {
     const lowerInput = userInput.toLowerCase();
 
-    // 1. Reakcja na standardowe powitania lub pożegnania
     const defaultReply = handleDefaultResponse(lowerInput);
     if (defaultReply) {
         return defaultReply;
     }
 
-    // 2. SPRAWDZENIE: Czy użytkownik podał słowny opis pogody?
-    // Jeśli tekst zawiera cyfry (np. 15 stopni) lub słowa-klucze pogodowe, przetwarzamy go lokalnie
     const hasNumbers = /\d+/.test(userInput);
     const hasWeatherKeywords = lowerInput.includes('stopn') || lowerInput.includes('stopie') || 
                                lowerInput.includes('ciepło') || lowerInput.includes('zimno') || 
@@ -148,7 +138,6 @@ async function getBotResponse(userInput) {
         return processLocalWeatherDescription(lowerInput);
     }
 
-    // 3. ALTERNATYWA: Jeśli to nie był opis, traktujemy to jako nazwę miasta i odpytujemy API
     const cityName = userInput.replace(/(pogoda w|pogoda|w|sprawdź|miasto)/gi, '').trim();
 
     if (cityName.length < 2) {
@@ -156,7 +145,6 @@ async function getBotResponse(userInput) {
     }
 
     try {
-        // Fetch do OpenWeatherMap API
         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric&lang=pl`);
         
         if (!response.ok) {
@@ -171,17 +159,14 @@ async function getBotResponse(userInput) {
 
         const data = await response.json();
         
-        // Odczyt parametrów z API
         const temp = data.main.temp;
         const weatherDescription = data.weather[0].description;
         const weatherMain = data.weather[0].main.toLowerCase();
         const windSpeed = data.wind.speed * 3.6; // m/s na km/h
 
-        // Mapowanie na kategorie
         const mappedTemp = mapTemperature(temp);
         const mappedWeather = mapWeatherCondition(weatherMain);
 
-        // Generowanie odpowiedzi
         let finalResponse = `🌍 **Pogoda z API dla miasta: ${data.name}**\n`;
         finalResponse += `🌡️ Temperatura: ${temp.toFixed(1)}°C | ☁️ Stan: ${weatherDescription}\n`;
         finalResponse += `💨 Wiatr: ${windSpeed.toFixed(1)} km/h\n\n`;
@@ -195,26 +180,22 @@ async function getBotResponse(userInput) {
     }
 }
 
-// NOWA FUNKCJA: Przetwarzanie ręcznego opisu użytkownika (odtworzenie Twoich pierwotnych założeń)
 function processLocalWeatherDescription(lowerInput) {
     let detectedTempCategory = 'neutralnie'; // domyślna
     let detectedWeatherCategory = null;
     let isWindy = lowerInput.includes('wiatr') || lowerInput.includes('wieje') || lowerInput.includes('mocno');
 
-    // 1. Wyciąganie temperatury z tekstu za pomocą wyrażenia regularnego
     const tempMatch = lowerInput.match(/(-?\d+)\s*(deg|stop|°)/);
     if (tempMatch) {
         const tempValue = parseInt(tempMatch[1]);
         detectedTempCategory = mapTemperature(tempValue);
     } else {
-        // Próba wykrycia po słowach kluczowych, jeśli nie podano konkretnej cyfry
         if (lowerInput.includes('zimno') || lowerInput.includes('mróz') || lowerInput.includes('śnieg')) detectedTempCategory = 'zimno';
         else if (lowerInput.includes('chłodno') || lowerInput.includes('rześko')) detectedTempCategory = 'chłodno';
         else if (lowerInput.includes('ciepło') || lowerInput.includes('ładnie')) detectedTempCategory = 'ciepło';
         else if (lowerInput.includes('gorąco') || lowerInput.includes('upał') || lowerInput.includes('skwar')) detectedTempCategory = 'gorąco';
     }
 
-    // 2. Wykrywanie warunków atmosferycznych z tekstu
     if (lowerInput.includes('deszcz') || lowerInput.includes('pada') || lowerInput.includes('ulewa') || lowerInput.includes('mży')) {
         detectedWeatherCategory = 'deszcz';
     } else if (lowerInput.includes('śnieg') || lowerInput.includes('sypie') || lowerInput.includes('zamieć')) {
@@ -227,7 +208,6 @@ function processLocalWeatherDescription(lowerInput) {
         detectedWeatherCategory = 'mgła';
     }
 
-    // 3. Budowanie nagłówka podsumowującego rozpoznanie
     let localHeader = `🤖 **Rozpoznałem Twój opis słowny:**\n`;
     if (tempMatch) {
         localHeader += `🌡️ Temperatura z opisu: ${tempMatch[1]}°C\n\n`;
@@ -238,7 +218,6 @@ function processLocalWeatherDescription(lowerInput) {
     return localHeader + generateClothingRecommendation(detectedTempCategory, detectedWeatherCategory, isWindy);
 }
 
-// Funkcja pomocnicza do mapowania temperatur na kategorie
 function mapTemperature(temp) {
     if (temp <= 5) return 'zimno';
     if (temp > 5 && temp <= 12) return 'chłodno';
@@ -247,7 +226,6 @@ function mapTemperature(temp) {
     return 'gorąco';
 }
 
-// Funkcja pomocnicza do mapowania stanów pogodowych z API na warunki dodatków
 function mapWeatherCondition(mainCondition) {
     if (mainCondition.includes('rain') || mainCondition.includes('drizzle')) return 'deszcz';
     if (mainCondition.includes('snow')) return 'śnieg';
@@ -257,7 +235,6 @@ function mapWeatherCondition(mainCondition) {
     return null;
 }
 
-// Funkcja generująca tekst rekomendacji modowych
 function generateClothingRecommendation(temperature, weather, isWindy) {
     let recommendation = '👕 **Oto moja rekomendacja odzieży:**\n\n';
     
@@ -345,7 +322,6 @@ function generateClothingRecommendation(temperature, weather, isWindy) {
     return recommendation;
 }
 
-// Obsługa domyślnych interakcji i poprawki językowe
 function handleDefaultResponse(input) {
     if (input.includes('cześć') || input.includes('hi') || input.includes('hello') || 
         input.includes('hej') || input.includes('witaj')) {
