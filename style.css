@@ -14,11 +14,10 @@
     --border-color: #e0e0e0;
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     
-    /* --- POPRAWKA KOLORÓW W TRYBIE JASNYM --- */
     --user-msg-bg: #667eea;
     --user-msg-text: #ffffff;
-    --bot-msg-bg: #f0f0f5;       /* Jasnoszare, estetyczne tło dla bota */
-    --bot-msg-text: #333333;     /* Ciemny, czytelny tekst bota */
+    --bot-msg-bg: #f0f0f5;
+    --bot-msg-text: #333333;
     
     --transition: all 0.3s ease;
 }
@@ -30,11 +29,10 @@ body.dark {
     --text-light: #b0b0b0;
     --border-color: #444444;
     
-    /* --- POPRAWKA KOLORÓW W TRYBIE CIEMNYM --- */
     --user-msg-bg: #667eea;
     --user-msg-text: #ffffff;
-    --bot-msg-bg: #2d2d2d;       /* Ciemne tło dopasowane do trybu nocnego */
-    --bot-msg-text: #e0e0e0;     /* Jasny, czytelny tekst bota */
+    --bot-msg-bg: #2d2d2d;
+    --bot-msg-text: #e0e0e0;
 }
 
 body {
@@ -264,7 +262,6 @@ body {
     justify-content: flex-start;
 }
 
-/* UCZYTELNIENIE I UNRASTROWIENIE MATRYCY DLA BOTA */
 .bot-message .message-content {
     background: var(--bot-msg-bg);
     color: var(--bot-msg-text);
@@ -435,8 +432,6 @@ body {
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
 }
-
-/* --- RESPONSYWNOŚĆ (MEDIA QUERIES) --- */
 
 @media (max-width: 1024px) {
     .container {
@@ -743,7 +738,6 @@ body {
         height: 5px;
     }
 
-    /* PRZYWRÓCONY I DOPASOWANY PANEL PORAD NA MOBILE */
     .info-panel {
         display: flex !important;
         flex-direction: column;
